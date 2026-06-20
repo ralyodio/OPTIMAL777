@@ -1,5 +1,5 @@
-import ACI_Governance_Root
-open ACI_Governance
+namespace ACI_Governance
+import ACI_Governance.Root
 
 def Node2 : Node := { 
     id := 2, 
@@ -7,3 +7,4 @@ def Node2 : Node := {
     is_unified := true, 
     lattice_seal := "SEALED_VALID" 
 }
+end ACI_Governance
