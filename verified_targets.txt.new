@@ -1,5 +1,4 @@
 ACIManifold
-ACI_Governance
 AM10
 AWM21
 AWMCore
@@ -33,9 +32,8 @@ QuantumFieldTheory
 SetTheory
 SovereignHamiltonian
 SpineLanguage
+StatisticalMechanics
+StochasticDifferentialEquations
 Synaptic_Weights
 Thermodynamics
-StochasticDifferentialEquations
-StatisticalMechanics
-SpineLanguage
-GovernanceKernel
+VerifyState
