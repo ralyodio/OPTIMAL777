@@ -37,3 +37,34 @@ The system features real-time dynamic stability evaluation via Lyapunov matrix o
   "execution_time_seconds": 0.6468784809112549,
   "apex_system_fully_certified": true
 }
+
+
+ +-----------------------------------+
+                 |     Formal Logic Tier (Lean 4)    |
+                 | - MC2Engine.lean                  |
+                 | - SovereignHamiltonian.lean       |
+                 | - SovereignGovernor.lean          |
+                 +-----------------+-----------------+
+                                   |
+                         [ Zero-Sorry Kernel ]
+                                   |
+                 +-----------------+-----------------+
+                 |   Python Verification Bridge      |
+                 | - VerifyBridge.py                 |
+                 | - ApexMasterRuntime.py            |
+                 +-----------------+-----------------+
+                                   |
+                         [ Real-Time Telemetry ]
+                                   |
+                 +-----------------+-----------------+
+                 |  Live Introspection Engine        |
+                 | - aci_mind.py                     |
+                 | - test_hyper_apex_level_100.py    |
+                 +----------------------------------
+
+Licensing & Commercial Usage
+Copyright (C) 2026 Anthony William Moruzin (OPTIMAL777). All rights reserved.
+This project is licensed under the GNU Affero General Public License v3 (AGPLv3).
+Open Source: Any derivative work or network-hosted integration must remain open-source under AGPLv3.
+Commercial Exception: For proprietary enterprise licensing, research collaborations, or custom integration rights outside AGPLv3 terms, contact Anthony William Moruzin directly.
+
