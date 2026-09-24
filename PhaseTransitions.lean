@@ -143,7 +143,7 @@ theorem order_param_vanishes
     (hphi : 0 < phi0) (hb : 0 < beta_exp) :
     ∀ eps : ℝ, 0 < eps →
     ∃ delta : ℝ, 0 < delta ∧
-      ∀ t : ℝ, 0 < t → t < delta →
+      ∀ t : ℝ, (ht : 0 < t) → t < delta →
         order_param_scaling phi0 beta_exp t (by assumption) <
         eps := by
   intro eps heps
@@ -152,13 +152,11 @@ theorem order_param_vanishes
   · positivity
   · intro t ht htd
     unfold order_param_scaling
-    have : t ^ beta_exp < (eps / phi0) ^ (beta_exp * (1/beta_exp)) := by
-      apply Real.rpow_lt_rpow ht.le htd
-      positivity
-    rw [mul_one_div_cancel (ne_of_gt hb), Real.rpow_one] at this
-    rw [Real.rpow_natCast] at this ⊢
-    nlinarith [rpow_pos_of_pos ht beta_exp,
-               div_pos heps hphi]
+    have : t ^ beta_exp < ((eps / phi0) ^ (1/beta_exp)) ^ beta_exp :=
+      Real.rpow_lt_rpow ht.le htd hb
+    rw [← Real.rpow_mul (by positivity), one_div_mul_cancel (ne_of_gt hb),
+      Real.rpow_one, lt_div_iff₀ hphi] at this
+    linarith
 
 -- Rushbrooke scaling relation: α + 2β + γ = 2
 def rushbrooke_holds (ce : CriticalExponents) : Prop :=
@@ -181,7 +179,7 @@ theorem widom_delta_gt_one
   linarith [div_pos ce.gamma_pos ce.beta_pos]
 
 -- Mean field exponents
-def mean_field_exponents : CriticalExponents where
+noncomputable def mean_field_exponents : CriticalExponents where
   beta_exp  := 1/2
   gamma_exp := 1
   nu_exp    := 1/2
@@ -228,17 +226,16 @@ theorem correlation_diverges
   · intro t ht htd
     unfold correlation_length
     apply lt_of_le_of_lt (le_max_left M 1)
-    rw [show (-nu) = -(nu) from rfl]
-    rw [Real.rpow_neg ht.le]
-    rw [lt_div_iff (rpow_pos_of_pos ht nu)]
+    have hm : 0 < max M 1 := lt_of_lt_of_le one_pos (le_max_right M 1)
+    rw [Real.rpow_neg ht.le, ← div_eq_mul_inv]
+    rw [lt_div_iff₀ (rpow_pos_of_pos ht nu)]
     calc max M 1 * t ^ nu
         < max M 1 * ((xi0 / max M 1) ^ (1/nu)) ^ nu := by
-            apply mul_lt_mul_of_pos_left _ (by positivity)
-            apply Real.rpow_lt_rpow ht.le htd
-            positivity
+            apply mul_lt_mul_of_pos_left _ hm
+            exact Real.rpow_lt_rpow ht.le htd hnu
       _ = xi0 := by
-            rw [← Real.rpow_natCast, ← Real.rpow_mul (by positivity)]
-            rw [one_div, inv_mul_cancel (ne_of_gt hnu)]
+            rw [← Real.rpow_mul (by positivity)]
+            rw [one_div, inv_mul_cancel₀ (ne_of_gt hnu)]
             rw [Real.rpow_one]
             field_simp
 
@@ -257,17 +254,17 @@ theorem two_point_pos
 theorem correlation_exponential_decay
     (r1 r2 xi eta : ℝ)
     (hr1 : 0 < r1) (hr2 : 0 < r2)
-    (hxi : 0 < xi) (h : r1 < r2) :
+    (hxi : 0 < xi) (h : r1 < r2) (heta : -2 ≤ eta) :
     two_point_correlator r2 xi eta hr2 <
     two_point_correlator r1 xi eta hr1 ∨
     eta = -2 := by
   left
   unfold two_point_correlator
-  apply mul_lt_mul_of_pos_right
-  · apply Real.exp_lt_exp.mpr
-    apply neg_lt_neg
-    exact div_lt_div_of_pos_right h hxi (le_refl _)
-  · exact rpow_pos_of_pos hr2 _
+  apply mul_lt_mul'
+  · exact Real.rpow_le_rpow_of_nonpos hr1 h.le (by linarith)
+  · exact Real.exp_lt_exp.mpr (div_lt_div_of_pos_right (neg_lt_neg h) hxi)
+  · exact (Real.exp_pos _).le
+  · exact rpow_pos_of_pos hr1 _
 
 -- ============================================================
 -- SECTION 5: RENORMALIZATION GROUP FLOW
@@ -359,17 +356,17 @@ theorem specific_heat_diverges
   · intro t ht htd
     unfold specific_heat_scaling
     apply lt_of_le_of_lt (le_max_left M 1)
-    rw [Real.rpow_neg ht.le]
-    rw [lt_div_iff (rpow_pos_of_pos ht alpha)]
+    have hm : 0 < max M 1 := lt_of_lt_of_le one_pos (le_max_right M 1)
+    rw [Real.rpow_neg ht.le, ← div_eq_mul_inv]
+    rw [lt_div_iff₀ (rpow_pos_of_pos ht alpha)]
     calc max M 1 * t ^ alpha
         < max M 1 *
           ((C0 / max M 1) ^ (1/alpha)) ^ alpha := by
-            apply mul_lt_mul_of_pos_left _ (by positivity)
-            apply Real.rpow_lt_rpow ht.le htd; positivity
+            apply mul_lt_mul_of_pos_left _ hm
+            exact Real.rpow_lt_rpow ht.le htd halpha
       _ = C0 := by
-            rw [← Real.rpow_natCast,
-                ← Real.rpow_mul (by positivity)]
-            rw [one_div, inv_mul_cancel (ne_of_gt halpha),
+            rw [← Real.rpow_mul (by positivity)]
+            rw [one_div, inv_mul_cancel₀ (ne_of_gt halpha),
                 Real.rpow_one]
             field_simp
 
@@ -544,7 +541,7 @@ structure PhaseTransitionsLock where
                          T_KT = Real.pi * J ∧ 0 < T_KT
   high_T_disorder  : ∀ (dop : DomainOrderParameter)
                        (a0 b : ℝ),
-                       0 < a0 → 0 < b →
+                       0 < a0 → (hb : 0 < b) →
                        dop.T_c < dop.T →
                        0 ≤ system_free_energy dop a0 b
                              (by assumption)

@@ -66,7 +66,7 @@ theorem remediation_seals
     actual bottleneck identified by N7Spine's own `bottleneck`
     function -- and leaves every other domain provably unchanged. -/
 
-def correct_bottleneck
+noncomputable def correct_bottleneck
     (mv : MarginVector) (target : ℝ) (h_target_nonneg : 0 ≤ target) :
     MarginVector where
   m := fun d => if d = bottleneck mv then target else mv.m d

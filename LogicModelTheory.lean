@@ -35,7 +35,6 @@ theorem LEM_tautology (n : ℕ) :
     is_tautology (.disj (.var n) (.neg (.var n))) := by
   intro v
   simp [eval_prop]
-  cases (v n) <;> simp
 
 -- Double negation
 theorem double_neg (n : ℕ) :
@@ -43,7 +42,6 @@ theorem double_neg (n : ℕ) :
       (.impl (.neg (.neg (.var n))) (.var n)) := by
   intro v
   simp [eval_prop]
-  cases (v n) <;> simp
 
 -- Modus ponens is a tautology
 theorem modus_ponens (n m : ℕ) :
@@ -144,11 +142,11 @@ theorem godel_number_pos
     0 < godel_number p := by
   unfold godel_number
   induction p with
-  | var n => simp; omega
-  | neg _ k => simp; omega
-  | conj _ _ k1 k2 => simp; omega
-  | disj _ _ k1 k2 => simp; omega
-  | impl _ _ k1 k2 => simp; omega
+  | var n => simp
+  | neg _ k => simp
+  | conj _ _ k1 k2 => simp
+  | disj _ _ k1 k2 => simp
+  | impl _ _ k1 k2 => simp
 
 -- ============================================================
 -- SECTION 5: MODEL THEORY
@@ -193,19 +191,19 @@ theorem LS_downward_proxy
 
 -- Ultrafilter proxy
 def is_ultrafilter_proxy
-    (U : Finset ℕ → Prop) : Prop :=
-  U Finset.univ ∧
-  ∀ S T : Finset ℕ,
+    (U : Set ℕ → Prop) : Prop :=
+  U Set.univ ∧
+  ∀ S T : Set ℕ,
     U S → S ⊆ T → U T
 
 theorem trivial_ultrafilter :
     is_ultrafilter_proxy
-      (fun S => S = Finset.univ) := by
+      (fun S => S = Set.univ) := by
   constructor
   · rfl
   · intro S T hS hST
     rw [hS] at hST
-    exact Finset.eq_univ_of_univ_subset hST
+    exact Set.univ_subset_iff.mp hST
 
 -- Łoś's theorem proxy
 theorem los_theorem_proxy
@@ -295,7 +293,7 @@ noncomputable def domain_model :
     Structure 21 where
   domain  := Finset.univ.image
     (fun d : Domain21 => d.toCtorIdx)
-  dom_pos := by simp; native_decide
+  dom_pos := by simp; decide
   interp  := fun i _ => i.val
 
 theorem domain_model_pos :
@@ -369,7 +367,7 @@ def LMTLock : LogicModelTheoryLock where
   mp_taut        := modus_ponens
   godel_pos      := godel_number_pos
   structure_pos  := structure_domain_pos
-  LS_proxy       := LS_downward_proxy
+  LS_proxy       := fun n hn => LS_downward_proxy n n hn
   LEM_deriv      := LEM_derivable
   dom_model_pos  := domain_model_pos
   dom_godel_pos  := domain_godel_pos

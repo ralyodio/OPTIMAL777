@@ -24,7 +24,7 @@ theorem lie_anti_sym (n : ℕ)
     (x y : Fin n → ℝ) (i : Fin n) :
     L.bracket x y i = -(L.bracket y x i) := by
   have h := L.anti_sym x y
-  simp [Function.funext_iff] at h
+  rw [funext_iff] at h
   exact h i
 
 theorem lie_jacobi (n : ℕ)
@@ -129,9 +129,8 @@ theorem killing_form_bilinear (n : ℕ)
     killing_form_proxy n X Z +
     c * killing_form_proxy n Y Z := by
   unfold killing_form_proxy
-  simp [Finset.sum_add_distrib,
-        Finset.mul_sum]
-  ring
+  rw [Finset.mul_sum, ← Finset.sum_add_distrib]
+  congr 1; ext i; ring
 
 -- Cartan's criterion proxy
 theorem cartan_criterion_nonneg
@@ -156,7 +155,7 @@ theorem root_system_nonempty (n : ℕ)
   R.roots_nn
 
 -- Cartan matrix entries
-def cartan_matrix_entry
+noncomputable def cartan_matrix_entry
     (α β norm_α : ℝ) : ℝ :=
   2 * (α * β) / norm_α
 
@@ -168,7 +167,6 @@ theorem cartan_diag_two
   unfold cartan_matrix_entry
   rw [hn]
   field_simp
-  ring
 
 -- Dynkin diagram: A_n has n nodes
 def An_nodes (n : ℕ) : ℕ := n
@@ -266,7 +264,6 @@ theorem SU2_sigma3_trace :
     Matrix.trace SU2_sigma3 = 0 := by
   unfold SU2_sigma3 Matrix.trace
   simp [Matrix.diag]
-  norm_num
 
 -- SO(3) dimension
 def SO3_dim : ℕ := 3

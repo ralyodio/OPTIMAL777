@@ -53,12 +53,12 @@ def is_lyapunov_function (n : ℕ)
 noncomputable def quadratic_V (n : ℕ)
     (P : Matrix (Fin n) (Fin n) ℝ)
     (x : Fin n → ℝ) : ℝ :=
-  Matrix.dotProduct x (P.mulVec x)
+  dotProduct x (P.mulVec x)
 
 theorem quadratic_V_nonneg (n : ℕ)
     (P : Matrix (Fin n) (Fin n) ℝ)
     (hP : ∀ v : Fin n → ℝ,
-      0 ≤ Matrix.dotProduct v (P.mulVec v))
+      0 ≤ dotProduct v (P.mulVec v))
     (x : Fin n → ℝ) :
     0 ≤ quadratic_V n P x := hP x
 
@@ -66,7 +66,7 @@ theorem quadratic_V_nonneg (n : ℕ)
 theorem exp_stable_proxy
     (lambda : ℝ) (h : lambda < 0) :
     Real.exp (lambda * 1) < 1 := by
-  apply Real.exp_lt_one
+  apply Real.exp_lt_one_iff.mpr
   linarith
 
 -- ============================================================
@@ -103,7 +103,7 @@ theorem PBH_proxy (n : ℕ)
 noncomputable def DC_gain (n m : ℕ)
     (S : LinearSystem n m 1)
     (hA : (-S.A).det ≠ 0) : ℝ :=
-  Matrix.dotProduct
+  dotProduct
     (Matrix.mulVec ((-S.A)⁻¹) (fun _ => 1))
     (fun _ => 1)
 
@@ -111,7 +111,7 @@ noncomputable def DC_gain (n m : ℕ)
 theorem poles_proxy (n : ℕ)
     (A : Matrix (Fin n) (Fin n) ℝ) :
     ∃ poles : Fin n → ℝ,
-      ∀ i, True :=
+      ∀ i : Fin n, True :=
   ⟨fun _ => 0, fun _ => trivial⟩
 
 -- Gain margin proxy
@@ -155,15 +155,15 @@ noncomputable def LQR_cost (n m : ℕ)
     (Q : Matrix (Fin n) (Fin n) ℝ)
     (R : Matrix (Fin m) (Fin m) ℝ)
     (x : Fin n → ℝ) (u : Fin m → ℝ) : ℝ :=
-  Matrix.dotProduct x (Q.mulVec x) +
-  Matrix.dotProduct u (R.mulVec u)
+  dotProduct x (Q.mulVec x) +
+  dotProduct u (R.mulVec u)
 
 theorem LQR_cost_nonneg (n m : ℕ)
     (Q : Matrix (Fin n) (Fin n) ℝ)
     (R : Matrix (Fin m) (Fin m) ℝ)
-    (hQ : ∀ v, 0 ≤ Matrix.dotProduct v
+    (hQ : ∀ v, 0 ≤ dotProduct v
       (Q.mulVec v))
-    (hR : ∀ v, 0 ≤ Matrix.dotProduct v
+    (hR : ∀ v, 0 ≤ dotProduct v
       (R.mulVec v))
     (x : Fin n → ℝ) (u : Fin m → ℝ) :
     0 ≤ LQR_cost n m Q R x u :=
@@ -184,16 +184,13 @@ theorem PMP_proxy :
 -- H-infinity norm proxy
 noncomputable def H_inf_norm (n : ℕ)
     (G : Fin n → ℝ) : ℝ :=
-  Finset.univ.sup' Finset.univ_nonempty
-    (fun i => |G i|)
+  ⨆ i, |G i|
 
 theorem H_inf_nonneg (n : ℕ)
     (G : Fin n → ℝ) :
     0 ≤ H_inf_norm n G := by
   unfold H_inf_norm
-  apply le_trans (abs_nonneg _)
-  apply Finset.le_sup'
-  exact Finset.mem_univ _
+  exact Real.iSup_nonneg (fun _ => abs_nonneg _)
 
 -- Small gain theorem proxy
 theorem small_gain_proxy
@@ -230,9 +227,11 @@ theorem sliding_surface_linear (n : ℕ)
     sliding_surface n c x +
     alpha * sliding_surface n c y := by
   unfold sliding_surface
-  simp [mul_add, add_mul,
+  simp [mul_add,
         Finset.sum_add_distrib,
         Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro i _
   ring
 
 -- Backstepping proxy
@@ -269,15 +268,13 @@ theorem domain_LQR_nonneg :
     0 ≤ domain_LQR :=
   LQR_cost_nonneg 21 21 1 1
     (fun v => by
-      simp [Matrix.dotProduct,
-            Matrix.mulVec, Matrix.one_apply]
+      simp only [Matrix.one_mulVec, dotProduct]
       apply Finset.sum_nonneg; intro i _
-      exact sq_nonneg _)
+      exact mul_self_nonneg _)
     (fun v => by
-      simp [Matrix.dotProduct,
-            Matrix.mulVec, Matrix.one_apply]
+      simp only [Matrix.one_mulVec, dotProduct]
       apply Finset.sum_nonneg; intro i _
-      exact sq_nonneg _)
+      exact mul_self_nonneg _)
     (fun _ => 1) (fun _ => 1)
 
 -- Domain PID zero error
@@ -318,7 +315,7 @@ structure ControlTheoryAdvancedLock where
                      (P : Matrix (Fin n)
                            (Fin n) ℝ),
                      (∀ v : Fin n → ℝ,
-                       0 ≤ Matrix.dotProduct v
+                       0 ≤ dotProduct v
                          (P.mulVec v)) →
                      ∀ x, 0 ≤ quadratic_V n P x
   LQR_nn         : ∀ (n m : ℕ)
@@ -326,9 +323,9 @@ structure ControlTheoryAdvancedLock where
                            (Fin n) ℝ)
                      (R : Matrix (Fin m)
                            (Fin m) ℝ),
-                     (∀ v, 0 ≤ Matrix.dotProduct v
+                     (∀ v, 0 ≤ dotProduct v
                        (Q.mulVec v)) →
-                     (∀ v, 0 ≤ Matrix.dotProduct v
+                     (∀ v, 0 ≤ dotProduct v
                        (R.mulVec v)) →
                      ∀ (x : Fin n → ℝ)
                        (u : Fin m → ℝ),

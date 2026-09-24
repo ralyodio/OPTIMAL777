@@ -30,14 +30,14 @@ jobs:
       - name: Get Mathlib cache
         run: lake exe cache get
 
-      # Build every lean_lib declared in lakefile.lean plus the executable.
-      # A bare `lake build` only builds the default target (AWM21), and diffing
-      # HEAD^..HEAD only checked the last commit of a push.
+      # Build every lean_lib declared in lakefile.lean. A bare `lake build` only
+      # builds the default target (AWM21), and diffing HEAD^..HEAD only checked
+      # the last commit of a push.
       - name: Build all libraries
         run: |
           set -o pipefail
           TARGETS=$(grep -oP '^lean_lib \K\S+' lakefile.lean)
-          lake build $TARGETS aci_bootstrap 2>&1 | tee build.log
+          lake build $TARGETS 2>&1 | tee build.log
 
       - name: Check for sorry
         run: |
