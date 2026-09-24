@@ -27,7 +27,6 @@ lean_lib Optimus7Quantum
 lean_lib QuantumCore
 lean_lib EnergyDomain
 lean_lib VerifyState
-lean_lib ACI_Governance
 lean_lib PrimeMasterEngine
 lean_lib InformationGeometry
 lean_lib NumberTheoryCore

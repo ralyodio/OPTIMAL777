@@ -195,9 +195,9 @@ def subobject_classifier_proxy
   ∃ Ω : C.obj, True
 
 theorem topos_has_classifier
-    (C : Category) :
+    (C : Category) [Nonempty C.obj] :
     subobject_classifier_proxy C :=
-  ⟨by exact Classical.choice ⟨⟩, trivial⟩
+  ⟨Classical.arbitrary _, trivial⟩
 
 -- Internal logic of a topos proxy
 theorem topos_logic_nonneg (n : ℕ) :
@@ -256,12 +256,12 @@ inductive Domain21 : Type where
   deriving DecidableEq, Repr, Fintype
 
 -- AWM category: domains as objects
-def AWM_category : Category where
+abbrev AWM_category : Category where
   obj      := Domain21
   hom      := fun _ _ => ℕ
   id       := fun _ => 0
   comp     := fun m n => m + n
-  id_left  := fun _ => rfl
+  id_left  := fun f => Nat.zero_add f
   id_right := fun f => Nat.add_zero f
   assoc    := fun f g h => Nat.add_assoc f g h
 
@@ -294,7 +294,7 @@ theorem AWM_functor_id (A : Domain21) :
 -- Domain object count
 theorem AWM_obj_count :
     Fintype.card Domain21 = 21 :=
-  by native_decide
+  by decide
 
 -- AWM hom nonneg
 theorem AWM_hom_nonneg
@@ -312,24 +312,26 @@ theorem AWM_pullback (A B : Domain21) :
 -- SYSTEM LOCK
 -- ============================================================
 
+universe u v u' v'
+
 structure CategoryTheoryAdvancedLock where
-  cat_id_left    : ∀ (C : Category)
+  cat_id_left    : ∀ (C : Category.{u, v})
                      {A B : C.obj}
                      (f : C.hom A B),
                      C.comp (C.id A) f = f
-  cat_assoc      : ∀ (C : Category)
+  cat_assoc      : ∀ (C : Category.{u, v})
                      {A B D E : C.obj}
                      (f : C.hom A B)
                      (g : C.hom B D)
                      (h : C.hom D E),
                      C.comp (C.comp f g) h =
                      C.comp f (C.comp g h)
-  fun_id         : ∀ (C D : Category)
+  fun_id         : ∀ (C : Category.{u, v}) (D : Category.{u', v'})
                      (F : Functor C D)
                      (A : C.obj),
                      F.hom_map (C.id A) =
                      D.id (F.obj_map A)
-  fun_comp       : ∀ (C D : Category)
+  fun_comp       : ∀ (C : Category.{u, v}) (D : Category.{u', v'})
                      (F : Functor C D)
                      {A B E : C.obj}
                      (f : C.hom A B)
@@ -337,7 +339,7 @@ structure CategoryTheoryAdvancedLock where
                      F.hom_map (C.comp f g) =
                      D.comp (F.hom_map f)
                        (F.hom_map g)
-  nat_natural    : ∀ (C D : Category)
+  nat_natural    : ∀ (C : Category.{u, v}) (D : Category.{u', v'})
                      (F G : Functor C D)
                      (η : NatTrans C D F G)
                      {A B : C.obj}
@@ -346,7 +348,7 @@ structure CategoryTheoryAdvancedLock where
                        (G.hom_map f) =
                      D.comp (F.hom_map f)
                        (η.component B)
-  CCC_proxy      : ∀ C : Category, is_CCC C
+  CCC_proxy      : ∀ C : Category.{u, v}, is_CCC C
   AWM_id         : ∀ A : Domain21,
                      AWM_category.id A = 0
   AWM_assoc      : ∀ {A B C D : Domain21}
@@ -365,7 +367,7 @@ structure CategoryTheoryAdvancedLock where
                      pullback_exists
                        AWM_category A B
 
-def CTALock : CategoryTheoryAdvancedLock where
+def CTALock : CategoryTheoryAdvancedLock.{u, v, u', v'} where
   cat_id_left   := cat_id_left
   cat_assoc     := cat_assoc
   fun_id        := functor_preserves_id

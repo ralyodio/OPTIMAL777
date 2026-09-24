@@ -21,7 +21,8 @@ noncomputable def loop_concat (n : ℕ)
     if t ≤ 1/2 then f.path (2*t) i
     else g.path (2*t - 1) i
   start  := by intro i; simp; exact f.start i
-  finish := by intro i; simp; exact g.finish i
+  finish := by
+    intro i; rw [if_neg (by norm_num)]; norm_num; rw [g.finish i, h]
 
 noncomputable def const_loop (n : ℕ)
     (p : Fin n → ℝ) : Loop n where
@@ -34,8 +35,8 @@ noncomputable def loop_reverse (n : ℕ)
     (f : Loop n) : Loop n where
   base   := f.base
   path   := fun t => f.path (1 - t)
-  start  := f.finish
-  finish := f.start
+  start  := fun i => by simpa using f.finish i
+  finish := fun i => by simpa using f.start i
 
 theorem reverse_reverse (n : ℕ) (f : Loop n) :
     (loop_reverse n (loop_reverse n f)).path =
@@ -79,9 +80,11 @@ theorem deck_compose (n : ℕ)
   ⟨{ T         := fun x => d1.T (d2.T x)
      T_inv     := fun x => d2.T_inv (d1.T_inv x)
      left_inv  := fun x i => by
-       simp [d2.left_inv, d1.left_inv]
+       simp only [show d1.T_inv (d1.T (d2.T x)) = d2.T x from
+         funext (d1.left_inv _), d2.left_inv]
      right_inv := fun x i => by
-       simp [d1.right_inv, d2.right_inv] },
+       simp only [show d2.T (d2.T_inv (d1.T_inv x)) = d1.T_inv x from
+         funext (d2.right_inv _), d1.right_inv] },
    fun x i => rfl⟩
 
 -- ============================================================
@@ -166,7 +169,7 @@ theorem cup_product_nonneg (d1 d2 : ℕ) :
 -- ============================================================
 
 structure ShortExactSequence where
-  A B C   : ℕ
+  (A B C : ℕ)
   f       : Fin A → Fin B
   g       : Fin B → Fin C
   f_inj   : Function.Injective f
@@ -176,11 +179,11 @@ structure ShortExactSequence where
 
 theorem rank_inequality (ses : ShortExactSequence) :
     ses.A ≤ ses.B := by
-  apply Fintype.card_le_of_injective ses.f ses.f_inj
+  simpa using Fintype.card_le_of_injective ses.f ses.f_inj
 
 theorem rank_C_le_B (ses : ShortExactSequence) :
     ses.C ≤ ses.B := by
-  apply Fintype.card_le_of_surjective ses.g ses.g_surj
+  simpa using Fintype.card_le_of_surjective ses.g ses.g_surj
 
 theorem SES_euler_zero (ses : ShortExactSequence) :
     (ses.A : ℤ) - ses.B + ses.C = 0 := by
@@ -228,7 +231,9 @@ theorem homotopic_trans (n m : ℕ)
   exact ⟨fun t x => if t ≤ 1/2 then
       H1 (2*t) x else H2 (2*t-1) x,
     fun x i => by simp [h10],
-    fun x i => by simp [h21]⟩
+    fun x i => by
+      simp only [show ¬ ((1:ℝ) ≤ 1/2) by norm_num, if_false]
+      norm_num [h21]⟩
 
 def is_contractible (n : ℕ) (p : Fin n → ℝ) : Prop :=
   homotopic n n id (fun _ => p)
@@ -250,7 +255,7 @@ structure FiberBundle (n k : ℕ) where
   fiber_dim : ℕ := k
   projection : (Fin (n+k) → ℝ) → Fin n → ℝ
   local_triv : ∀ p : Fin n → ℝ,
-    ∃ U : Fin n → ℝ → Prop, U p = fun _ => True
+    ∃ U : (Fin n → ℝ) → ℝ → Prop, U p = fun _ => True
 
 def trivial_bundle (n k : ℕ) : FiberBundle n k where
   projection := fun x => fun i => x ⟨i.val, by omega⟩
@@ -339,7 +344,7 @@ def AWM_connected (awm : AWMComplex) : Prop :=
 theorem full_AWM_connected :
     AWM_connected full_AWM_complex := by
   constructor
-  · simp [full_AWM_complex]; exact Fintype.card_pos
+  · simp [full_AWM_complex]; exact Fintype.card_pos_iff.2 ⟨.A_Energy⟩
   · intro d1 d2 _ _
     exact ⟨[d1, d2], by simp, by simp⟩
 

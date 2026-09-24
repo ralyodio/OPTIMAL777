@@ -149,17 +149,22 @@ theorem tier9_squash_bounded
 
 theorem tier10_projection_idempotent
     {n : ℕ} (v : Fin n → ℝ) :
-    ACIManifold.P n (ACIManifold.P n v) = ACIManifold.P n v :=
-  ACIManifold.P_idempotent n v
+    ACI_Sovereign.P n (ACI_Sovereign.P n v) = ACI_Sovereign.P n v := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · exact Subsingleton.elim _ _
+  · exact ACI_Sovereign.P_idempotent n hn v
 
 theorem tier10_decoupling
     {n : ℕ}
     (W : (Fin n → ℝ) →ₗ[ℝ] (Fin n → ℝ))
     (D_star : Fin n → ℝ) (β : ℝ) (v : Fin n → ℝ) :
-    ACIManifold.P_linear n (W (ACIManifold.P n v) -
-      β • (∑ i, ACIManifold.P n v i) • D_star) =
-    ACIManifold.P_linear n (W (ACIManifold.P n v)) :=
-  ACIManifold.J_red_decoupling n W D_star β v
+    ACI_Sovereign.P_linear n (W (ACI_Sovereign.P n v) -
+      β • (∑ i, ACI_Sovereign.P n v i) • D_star) =
+    ACI_Sovereign.P_linear n (W (ACI_Sovereign.P n v)) := by
+  rcases Nat.eq_zero_or_pos n with rfl | hn
+  · exact Subsingleton.elim _ _
+  · rw [ACI_Sovereign.ones_annihilates_P n hn v]
+    simp
 
 /-! ## TIER 11: Manifold21 — Symplectic and Hamiltonian Flow -/
 
@@ -214,8 +219,8 @@ theorem tier14_composition_seal
     (P.toLinearMap * ρ_op.toLinearMap *
      P.toLinearMap).adjoint =
      P.toLinearMap * ρ_op.toLinearMap * P.toLinearMap :=
-  Optimus7_Absolute_Shield.complete_self_adjoint_composition_seal
-    ρ_op P hρ hP
+  by rw [Module.End.mul_eq_comp, Module.End.mul_eq_comp, LinearMap.adjoint_comp,
+    LinearMap.adjoint_comp, hρ, hP, LinearMap.comp_assoc]
 
 /-! ## TIER 15: Optimus7Quantum — CPTP Maps -/
 
@@ -232,10 +237,10 @@ theorem tier16_proj_spectrum
     {H : Type*} [NormedAddCommGroup H]
     [InnerProductSpace ℂ H] [FiniteDimensional ℂ H]
     [CompleteSpace H] [Nontrivial H]
-    (P : QuantumCore.Projector) (v : H) (λ : ℂ)
-    (hv : P.op v = λ • v) (hv_ne : v ≠ 0) :
-    λ = 0 ∨ λ = 1 :=
-  QuantumCore.proj_spectrum P v λ hv hv_ne
+    (P : QuantumCore.Projector) (v : H) (lam : ℂ)
+    (hv : P.op v = lam • v) (hv_ne : v ≠ 0) :
+    lam = 0 ∨ lam = 1 :=
+  QuantumCore.proj_spectrum P v lam hv hv_ne
 
 /-! ## TIER 17: PhysicsCore — Fusion and MHD -/
 
@@ -340,26 +345,26 @@ theorem Ω_minimal_poly : Ω_val ^ 2 = Ω_val + 1 := by
   have h5 : Real.sqrt 5 ^ 2 = 5 := Real.sq_sqrt (by norm_num)
   field_simp; nlinarith [h5]
 
-def canonical_Ω : GoldenRatio :=
+noncomputable def canonical_Ω : GoldenRatio :=
   { Ω := Ω_val, pos := Ω_pos, minimal := Ω_minimal_poly }
 
 theorem Ω_gt_one (φ : GoldenRatio) : 1 < φ.Ω := by
   nlinarith [φ.pos, φ.minimal, sq_nonneg (φ.Ω - 1)]
 
 theorem Ω_seventh (φ : GoldenRatio) : φ.Ω ^ 7 = 13 * φ.Ω + 8 := by
-  nlinarith [φ.minimal, sq_nonneg φ.Ω,
-             show φ.Ω ^ 3 = 2 * φ.Ω + 1 by nlinarith [φ.minimal],
-             show φ.Ω ^ 4 = 3 * φ.Ω + 2 by nlinarith [φ.minimal],
-             show φ.Ω ^ 5 = 5 * φ.Ω + 3 by nlinarith [φ.minimal],
-             show φ.Ω ^ 6 = 8 * φ.Ω + 5 by nlinarith [φ.minimal]]
+  have h2 := φ.minimal
+  linear_combination (φ.Ω ^ 5 + φ.Ω ^ 4 + 2 * φ.Ω ^ 3 + 3 * φ.Ω ^ 2
+    + 5 * φ.Ω + 8) * h2
 
 theorem Ω_not_integer (φ : GoldenRatio) (n : ℤ) : φ.Ω ≠ n := by
   intro h
   have hmin := φ.minimal
   rw [h] at hmin
   have : (n : ℝ) ^ 2 = n + 1 := hmin
-  have : (n : ℤ) ^ 2 = n + 1 := by exact_mod_cast this
-  omega
+  have hz : (n : ℤ) ^ 2 = n + 1 := by exact_mod_cast this
+  have h1 : n ≤ 2 := by nlinarith
+  have h2 : -1 ≤ n := by nlinarith
+  interval_cases n <;> omega
 
 /-! ## EXTENSION: ISING SPIN ALGEBRA -/
 
@@ -393,8 +398,7 @@ theorem ising_product_sq_one (spins : List IsingSpin) :
   induction spins with
   | nil => simp
   | cons s t ih =>
-    simp [List.map_cons, List.prod_cons]
-    nlinarith [ising_squared s, ih, sq_nonneg (ising_value s)]
+    rw [List.map_cons, List.prod_cons, mul_pow, ising_squared, ih, one_mul]
 
 theorem ising_product_self_cancels (spins : List IsingSpin) :
     ising_product spins * ising_product spins = 1 := by
@@ -433,7 +437,7 @@ theorem contraction_iteration_bound (f : ℝ → ℝ) (k x x_star : ℝ)
   induction n with
   | zero => simp
   | succ n ih =>
-    simp [Function.iterate_succ']
+    rw [Function.iterate_succ_apply']
     calc |f (f^[n] x) - x_star|
         = |f (f^[n] x) - f x_star| := by rw [hfp]
       _ ≤ k * |f^[n] x - x_star| := hf _ _
@@ -444,7 +448,9 @@ theorem contraction_iteration_bound (f : ℝ → ℝ) (k x x_star : ℝ)
 /-! ## EXTENSION: LYAPUNOV SYSTEM -/
 
 structure LyapunovState where
-  tau_sq E_post mu : ℝ
+  tau_sq : ℝ
+  E_post : ℝ
+  mu : ℝ
   t_nn : 0 ≤ tau_sq
   e_nn : 0 ≤ E_post
   m_nn : 0 ≤ mu
@@ -479,7 +485,10 @@ theorem lyapunov_strict_decrease (s t : LyapunovState)
 /-! ## EXTENSION: LAGRANGIAN MECHANICS -/
 
 structure LagrangianState where
-  q dq m k : ℝ
+  q : ℝ
+  dq : ℝ
+  m : ℝ
+  k : ℝ
   m_pos : 0 < m
   k_pos : 0 < k
 
@@ -494,11 +503,13 @@ noncomputable def lagrangian (s : LagrangianState) : ℝ :=
 
 theorem kinetic_nonneg (s : LagrangianState) :
     0 ≤ kinetic_lagrangian s := by
-  unfold kinetic_lagrangian; positivity
+  unfold kinetic_lagrangian
+  exact mul_nonneg (mul_nonneg (by norm_num) s.m_pos.le) (sq_nonneg _)
 
 theorem potential_nonneg (s : LagrangianState) :
     0 ≤ potential_lagrangian s := by
-  unfold potential_lagrangian; positivity
+  unfold potential_lagrangian
+  exact mul_nonneg (mul_nonneg (by norm_num) s.k_pos.le) (sq_nonneg _)
 
 theorem lagrangian_le_kinetic (s : LagrangianState) :
     lagrangian s ≤ kinetic_lagrangian s := by
@@ -507,6 +518,7 @@ theorem lagrangian_le_kinetic (s : LagrangianState) :
 theorem euler_lagrange_harmonic (s : LagrangianState) (ddq : ℝ)
     (hel : s.m * ddq = -(s.k * s.q)) :
     ddq = -(s.k / s.m) * s.q := by
+  have hm : s.m ≠ 0 := s.m_pos.ne'
   field_simp; linarith [mul_comm s.m ddq, hel]
 
 /-! ## SOVEREIGN SEAL -/

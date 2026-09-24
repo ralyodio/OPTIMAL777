@@ -3,36 +3,46 @@ name: Build ACI Library
 on:
   push:
     branches: [ main ]
+  pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
       - name: Install elan
         run: |
-          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
       - name: Cache Mathlib
         uses: actions/cache@v4
         with:
           path: .lake
-          key: Linux-lake-${{ hashFiles('lake-manifest.json') }}
+          key: Linux-lake-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
 
       - name: Get Mathlib cache
         run: lake exe cache get
 
-      - name: Build changed Lean files
+      # Build every lean_lib declared in lakefile.lean. A bare `lake build` only
+      # builds the default target (AWM21), and diffing HEAD^..HEAD only checked
+      # the last commit of a push.
+      - name: Build all libraries
         run: |
-          CHANGED=$(git diff --name-only HEAD^ HEAD -- '*.lean' | sed 's/\.lean$//')
-          if [ -z "$CHANGED" ]; then
-            echo "No .lean files changed in this push."
-          else
-            echo "Building: $CHANGED"
-            lake build $CHANGED
+          set -o pipefail
+          TARGETS=$(grep -oP '^lean_lib \K\S+' lakefile.lean)
+          lake build $TARGETS 2>&1 | tee build.log
+
+      - name: Check for sorry
+        run: |
+          if grep -n "declaration uses 'sorry'" build.log; then
+            echo "::error::Found declarations that use sorry"
+            exit 1
           fi
+          echo "No sorry found."
